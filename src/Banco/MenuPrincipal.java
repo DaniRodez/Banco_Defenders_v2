@@ -31,6 +31,7 @@ public class MenuPrincipal extends javax.swing.JFrame {
         
         NombreUsuario.setText("Bienvenido " + usuarioActual.nombre + " " + usuarioActual.apellido);
         IDUsuario.setText("ID |" + usuarioActual.id + "|");
+        SaldoUsuario.setText(String.format("Sueldo actual: $%.2f", usuarioActual.sueldo));
         
     }
     @SuppressWarnings("unchecked")
@@ -45,6 +46,7 @@ public class MenuPrincipal extends javax.swing.JFrame {
         Retirar = new javax.swing.JButton();
         Prestamo = new javax.swing.JButton();
         Historial = new javax.swing.JButton();
+        CerrarSesion = new javax.swing.JButton();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
 
@@ -68,10 +70,14 @@ public class MenuPrincipal extends javax.swing.JFrame {
         SaldoUsuario.setText("Saldo: [Saldo actual - deuda si tiene una WIP]");
 
         Retirar.setText("Retirar");
+        Retirar.addActionListener(this::RetirarActionPerformed);
 
         Prestamo.setText("Opciones de prestamo");
 
         Historial.setText("Historial");
+
+        CerrarSesion.setText("Cerrar sesion");
+        CerrarSesion.addActionListener(this::CerrarSesionActionPerformed);
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
@@ -95,11 +101,11 @@ public class MenuPrincipal extends javax.swing.JFrame {
             .addGroup(layout.createSequentialGroup()
                 .addGap(44, 44, 44)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                    .addComponent(CerrarSesion, javax.swing.GroupLayout.DEFAULT_SIZE, 354, Short.MAX_VALUE)
                     .addComponent(Historial, javax.swing.GroupLayout.DEFAULT_SIZE, 354, Short.MAX_VALUE)
-                    .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                        .addComponent(Prestamo, javax.swing.GroupLayout.DEFAULT_SIZE, 354, Short.MAX_VALUE)
-                        .addComponent(Retirar, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                        .addComponent(Depositar, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
+                    .addComponent(Prestamo, javax.swing.GroupLayout.DEFAULT_SIZE, 354, Short.MAX_VALUE)
+                    .addComponent(Retirar, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(Depositar, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                 .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
         layout.setVerticalGroup(
@@ -113,15 +119,17 @@ public class MenuPrincipal extends javax.swing.JFrame {
                     .addComponent(IDUsuario, javax.swing.GroupLayout.PREFERRED_SIZE, 33, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(SaldoUsuario, javax.swing.GroupLayout.PREFERRED_SIZE, 31, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGap(70, 70, 70)
-                .addComponent(Depositar, javax.swing.GroupLayout.PREFERRED_SIZE, 29, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGap(65, 65, 65)
+                .addComponent(Depositar, javax.swing.GroupLayout.PREFERRED_SIZE, 34, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(Retirar, javax.swing.GroupLayout.PREFERRED_SIZE, 29, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(Prestamo, javax.swing.GroupLayout.PREFERRED_SIZE, 31, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(Historial, javax.swing.GroupLayout.PREFERRED_SIZE, 32, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addContainerGap(252, Short.MAX_VALUE))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(CerrarSesion, javax.swing.GroupLayout.PREFERRED_SIZE, 34, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addContainerGap(212, Short.MAX_VALUE))
         );
 
         pack();
@@ -130,8 +138,29 @@ public class MenuPrincipal extends javax.swing.JFrame {
     
     
     private void DepositarActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_DepositarActionPerformed
-        // TODO add your handling code here:
+        Deposito ventanaDeposito = new Deposito(usuarioActual);
+        ventanaDeposito.setVisible(true);
+        this.dispose();
     }//GEN-LAST:event_DepositarActionPerformed
+
+    private void RetirarActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_RetirarActionPerformed
+        VentanaRetiro Retiro = new VentanaRetiro(usuarioActual);
+        Retiro.setLocationRelativeTo(null);
+        Retiro.setVisible(true);
+        this.dispose();
+    }//GEN-LAST:event_RetirarActionPerformed
+
+    private void CerrarSesionActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_CerrarSesionActionPerformed
+        int opcion = javax.swing.JOptionPane.showConfirmDialog(this,"¿Deseas cerrar tu sesión actual?","Cerrar sesión", javax.swing.JOptionPane.YES_NO_OPTION, javax.swing.JOptionPane.QUESTION_MESSAGE);
+        if (opcion == javax.swing.JOptionPane.YES_OPTION){
+            controlador.guardarCambios();
+            usuarioActual = null;
+            
+            Registro login = new Registro();
+            login.setVisible(true);
+            this.dispose();
+        }
+    }//GEN-LAST:event_CerrarSesionActionPerformed
 
     /**
      * @param args the command line arguments
@@ -159,6 +188,7 @@ public class MenuPrincipal extends javax.swing.JFrame {
     }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JButton CerrarSesion;
     private javax.swing.JButton Depositar;
     private javax.swing.JButton Historial;
     private javax.swing.JLabel IDUsuario;

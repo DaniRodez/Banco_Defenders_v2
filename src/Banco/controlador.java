@@ -6,56 +6,58 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
-//Librerias propias para la seguridad de la contraseña
+//necesarios para la seguridad de la contrasena
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
-//Listas
+//para la lista
 import java.util.ArrayList;
 import java.util.List;
 
 public class controlador {
     
-    //Crea el archivo donde se guardan los usuaios
+    //crea un archivo para guardar los usuarios
     private static final String ARCHIVO_USUARIOS = "usuarios.csv";
-    //Crea el usuario administrador
+    //para el ID unico del admin
     private static final String ID_ADMIN = "Administrador";
-
-    //Lista de usuarios
+    //lista de usuarios 
     private static final List<Usuario> usuarios = new ArrayList<>();
+    //ID de usuarios que comienza en 1
     private static int contadorId = 1;
     
-    //Clase del usuario
+    //Clase de usuario
     public static class Usuario {
         public final String id;
         public final String nombre;
         public final String apellido;
-        
-    //Esconde la contraseña en el archivo
         private final String hashContrasena;
         public final String rol;
-
-    //Contructor del usuario
-        public Usuario(String id, String nombre, String apellido, String hashContrasena, String rol) {
+        public double sueldo;
+        
+        //Contructor de usuario
+        public Usuario(String id, String nombre, String apellido, String hashContrasena, String rol, double sueldo) {
             this.id = id;
             this.nombre = nombre;
             this.apellido = apellido;
             this.hashContrasena = hashContrasena;
             this.rol = rol;
+            this.sueldo = sueldo;
         }
-
-        //Si el usuario es el admin le da privilegios de admin
+        
+        //Si detecta a un admin entonces se le concede criterio de administrador
         public boolean esAdmin() {
             return "ADMIN".equalsIgnoreCase(rol) || ID_ADMIN.equalsIgnoreCase(id);
         }
     }
-
+    
+    //Carga a los usuarios por defecto y se asegura de que siempre haiga un admin
     static {
         cargarUsuarios();
         asegurarAdminPorDefecto();
     }
-    
-    //metodo que funciona principalmente para esconder la contraseña de los usuarios con hashtags
+
+    //Metodo que sirve para encriptar la contrasena de los usuarios en el documento
+    //No altera la contrasena original del usuario, solo la esconde
     private static String hashearContrasena(String contrasena) {
         try {
             //esconde la contraseña y la encripta para que no se recupere al formato normal
@@ -76,12 +78,15 @@ public class controlador {
         }
     }
 
-    //Verifica que el usuario ingrese los datos correctamente
-    public static boolean registrar(String nombre, String apellido, String contrasena, String confirmarContrasena) {
+    // se asegura que el usuario ingrese los datos del documento para poder entrar
+    public static boolean registrar(String nombre, String apellido, String contrasena, String confirmarContrasena, double sueldo) {
         if (nombre.isEmpty() || apellido.isEmpty() || contrasena.isEmpty() || confirmarContrasena.isEmpty()) {
             return false;
         }
         if (!contrasena.equals(confirmarContrasena)) {
+            return false;
+        }
+        if (sueldo < 0) {
             return false;
         }
         if (existeUsuario(nombre, apellido)) {
@@ -90,12 +95,17 @@ public class controlador {
 
         String nuevoId = generarSiguienteId();
         String hash = hashearContrasena(contrasena);
-        usuarios.add(new Usuario(nuevoId, nombre, apellido, hash, "USUARIO"));
+        usuarios.add(new Usuario(nuevoId, nombre, apellido, hash, "USUARIO", sueldo));
         guardarUsuarios();
         return true;
     }
 
-    //verifica que el usuario existe
+    //principal metodo para actualizar documentos anteriores
+    public static boolean registrar(String nombre, String apellido, String contrasena, String confirmarContrasena) {
+        return registrar(nombre, apellido, contrasena, confirmarContrasena, 0.0);
+    }
+    
+    //Se asegura de que el usuario exista 
     public static boolean existeUsuario(String nombre, String apellido) {
         for (Usuario u : usuarios) {
             if (u.nombre.equalsIgnoreCase(nombre) && u.apellido.equalsIgnoreCase(apellido)) {
@@ -105,7 +115,7 @@ public class controlador {
         return false;
     }
     
-    //Autenticador para que asegure que el usuario existe
+    //Valida la autenticidad del usuario 
     public static Usuario autenticar(String nombre, String apellido, String contrasena) {
         String hashIngresado = hashearContrasena(contrasena);
         for (Usuario u : usuarios) {
@@ -117,18 +127,23 @@ public class controlador {
         }
         return null;
     }
-
-    //actualiza id cuando un usuario se registra
+    
+    //guarda cambios realizados al documento (usualmente util al actualizar el sueldo)
+    public static void guardarCambios() {
+        guardarUsuarios();
+    }
+    
+    //Actualiza el ID si es que el usuario se registra exitosamente
     private static String generarSiguienteId() {
         String id;
         do {
-            id = "ID - " + contadorId;
+            id = "ID -" + contadorId;
             contadorId++;
         } while (existeId(id));
         return id;
     }
 
-    //verifica que el ID vinculado a los usuarios exista
+    //Valida que haiga un ID vinculado a cada usuario
     private static boolean existeId(String id) {
         for (Usuario u : usuarios) {
             if (u.id.equalsIgnoreCase(id)) {
@@ -137,8 +152,8 @@ public class controlador {
         }
         return false;
     }
-
-    //Asegura que siempre haiga un admin
+    
+    //asegura que siempte haiga un admin registrado
     private static void asegurarAdminPorDefecto() {
         for (Usuario u : usuarios) {
             if (u.esAdmin()) {
@@ -146,24 +161,26 @@ public class controlador {
             }
         }
         if (!existeId(ID_ADMIN)) {
-            usuarios.add(0, new Usuario(ID_ADMIN, "Banco", "Defenders", hashearContrasena("admin123"), "ADMIN"));
+            //datos del admin junto con la contrasena
+            //la contrasena tambien se encripta en el documento
+            usuarios.add(0, new Usuario(ID_ADMIN, "Banco", "Defenders", hashearContrasena("admin123"), "ADMIN", 0.0));
             guardarUsuarios();
         }
     }
 
-    //Guarda a los usuarios en el archivo
+    //Prirncipal metodo para guardar los usuarios en el archivo con todos sus datos y la contrasena encriptada
     private static void guardarUsuarios() {
         try (BufferedWriter bw = new BufferedWriter(new FileWriter(ARCHIVO_USUARIOS))) {
             for (Usuario u : usuarios) {
-                bw.write(u.id + ";" + u.nombre + ";" + u.apellido + ";" + u.hashContrasena + ";" + u.rol);
+                bw.write(u.id + ";" + u.nombre + ";" + u.apellido + ";" + u.hashContrasena + ";" + u.rol + ";" + u.sueldo);
                 bw.newLine();
             }
         } catch (IOException ex) {
-            System.err.println("Hubo un error al guardar el usuario " + ex.getMessage());
+            System.err.println("Hubo un error al guardar usuario " + ex.getMessage());
         }
     }
 
-    //carga a los usuarios desde el archivo
+    //Carga a los usuarios desde el archivo
     private static void cargarUsuarios() {
         File archivo = new File(ARCHIVO_USUARIOS);
         if (!archivo.exists()) {
@@ -173,6 +190,7 @@ public class controlador {
         usuarios.clear();
         contadorId = 1;
 
+        //conjuntos de trys que se aseguran de que los datos del usuario se cargen correctamente desde el archivo
         try (BufferedReader br = new BufferedReader(new FileReader(archivo))) {
             String linea;
             while ((linea = br.readLine()) != null) {
@@ -180,14 +198,30 @@ public class controlador {
                     continue;
                 }
                 String[] partes = linea.split(";", -1);
-                if (partes.length == 5) {
+                if (partes.length == 6) {
                     String id = partes[0].trim();
                     String nombre = partes[1].trim();
                     String apellido = partes[2].trim();
                     String hashGuardado = partes[3].trim();
                     String rol = partes[4].trim();
+                    double sueldo = 0.0;
+                    try {
+                        sueldo = Double.parseDouble(partes[5].trim());
+                    } catch (NumberFormatException ignored) {
+                    }
 
-                    usuarios.add(new Usuario(id, nombre, apellido, hashGuardado, rol));
+                    usuarios.add(new Usuario(id, nombre, apellido, hashGuardado, rol, sueldo));
+                    actualizarContador(id);
+                } else if (partes.length == 5) {
+                    String id = partes[0].trim();
+                    usuarios.add(new Usuario(
+                            id,
+                            partes[1].trim(),
+                            partes[2].trim(),
+                            partes[3].trim(),
+                            partes[4].trim(),
+                            0.0
+                    ));
                     actualizarContador(id);
                 }
             }
@@ -196,7 +230,7 @@ public class controlador {
         }
     }
 
-    //Actualiza el contador id
+    //Actualiza el contador ID
     private static void actualizarContador(String id) {
         if (id != null && id.startsWith("ID -")) {
             try {
@@ -209,3 +243,4 @@ public class controlador {
         }
     }
 }
+

@@ -120,7 +120,7 @@ public class Registrarse extends javax.swing.JFrame {
         }
     
     if (!contrasena.equals(confirmar)){
-        JOptionPane.showMessageDialog(this, "as contraseñas no coinciden", "Contraseñas incorrectas", JOptionPane.WARNING_MESSAGE);
+        JOptionPane.showMessageDialog(this, "Las contraseñas no coinciden", "Contraseñas incorrectas", JOptionPane.WARNING_MESSAGE);
         }
     
     if (controlador.existeUsuario(nombre, apellido)){
